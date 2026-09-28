@@ -64,8 +64,19 @@ public class p3 {
 
         Connection connection = null;
 
+        try {
+            // register the Oracle driver
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+
+        } catch (ClassNotFoundException e){
+            System.out.println("Where is your Oracle JDBC Driver?");
+            e.printStackTrace();
+            return;
+        }
+
         // connect to the database
         try {
+
            //add jdbc prefix
             String jdbcUrl = "jdbc:oracle:thin:@" + connectionUrl;
 
@@ -77,6 +88,8 @@ public class p3 {
 
         } catch (SQLException e) {
             System.out.println("ERROR: Unable to connect to database.");
+            System.out.println("Oracle error: " + e.getMessage());
+            e.printStackTrace();
             return;
         }
 
