@@ -69,101 +69,91 @@ public class p3 {
         System.out.println("Enter Member Email:");
         String memberEmail = input.nextLine();
 
-        try {
-            Statement stmt = connection.createStatement();
-            String str = "SELECT p.person_id, p.first_name, p.last_name, p.phone, m.member_level, m.date_joined FROM person p JOIN member m ON p.person_id = m.person_id WHERE p.person_id = ?";
-            PreparedStatement pstmt = connection.prepareStatement(str);
-            pstmt.setString(1, memberEmail);
+        Statement stmt = connection.createStatement();
+        String str = "SELECT p.person_id, p.first_name, p.last_name, p.phone, m.member_level, m.date_joined FROM person p JOIN member m ON p.person_id = m.person_id WHERE p.email = ?";
+        PreparedStatement pstmt = connection.prepareStatement(str);
+        pstmt.setString(1, memberEmail);
 
-            ResultSet rset = pstmt.executeQuery();
-            int member_id = 0;
-            String first_name = "";
-            String last_name = "";
-            String phone = "";
-            String member_level = "";
-            String date_joined = "";
+        ResultSet rset = pstmt.executeQuery();
+        int member_id = 0;
+        String first_name = "";
+        String last_name = "";
+        String phone = "";
+        String member_level = "";
+        String date_joined = "";
 
-            while (rset.next()) {
-                member_id = rset.getInt("person_id");
-                first_name = rset.getString("first_name");
-                last_name = rset.getString("last_name");
-                phone = rset.getString("phone");
-                member_level = rset.getString("member_level");
-                date_joined = rset.getDate(date_joined).toLocalDate().toString();
-            }
-
-            if (member_level == "") {
-                System.out.println("ERROR: Member not found.");
-                return;
-            }
-            System.out.println("Member Information");
-            System.out.println("Member ID: " + member_id);
-            System.out.println("Full Name: " + first_name + " " + last_name);
-            System.out.println("Email: " + memberEmail);
-            System.out.println("Phone: " + phone);
-            System.out.println("Member Level: " +  member_level);
-            System.out.println("Date Joined:  " + date_joined);
-
-        } catch (SQLException e) {
-            System.out.println("ERROR: SQL Error");
-
+        while (rset.next()) {
+            member_id = rset.getInt("person_id");
+            first_name = rset.getString("first_name");
+            last_name = rset.getString("last_name");
+            phone = rset.getString("phone");
+            member_level = rset.getString("member_level");
+            date_joined = rset.getDate("date_joined").toLocalDate().toString();
         }
+
+        if (member_level == "") {
+            System.out.println("ERROR: Member not found.");
+            return;
+        }
+        System.out.println("Member Information");
+        System.out.println("Member ID: " + member_id);
+        System.out.println("Full Name: " + first_name + " " + last_name);
+        System.out.println("Email: " + memberEmail);
+        System.out.println("Phone: " + phone);
+        System.out.println("Member Level: " +  member_level);
+        System.out.println("Date Joined:  " + date_joined);
+
     }
 
     static void reportReservation(Connection connection, Scanner input) throws SQLException {
         System.out.println("Enter Reservation ID:");
         int reservationID = input.nextInt();
 
-        try {
-            Statement stmt = connection.createStatement();
-            String str = "SELECT p.first_name, p.last_name, e.equipment_name, c.category_name, r.start_time, r.end_time, r.reservation_status, p_s.first_name as staff_first, p_s.last_name as staff_last" +
-                            "FROM reservation r JOIN member m ON r.member_id = m.person_id JOIN person p ON m.person_id = p.person_id JOIN equipment e ON r.equipment_id = e.equipment_id JOIN equipment_category c ON e.category_id = c.category_id" +
-                            "JOIN certification cert ON m.person_id = cert.member_id AND c.category_id = cert.category_id JOIN staff s ON cert.staff_id = s.person_id JOIN person p_s ON s.person_id = p_s.person_id" +
-                            "WHERE r.reservation_id = ?";
-            PreparedStatement pstmt = connection.prepareStatement(str);
-            pstmt.setInt(1, reservationID);
+        Statement stmt = connection.createStatement();
+        String str = "SELECT p.first_name, p.last_name, e.equipment_name, c.category_name, r.start_time, r.end_time, r.reservation_status, p_s.first_name as staff_first, p_s.last_name as staff_last " +
+                        "FROM reservation r JOIN member m ON r.member_id = m.person_id JOIN person p ON m.person_id = p.person_id JOIN equipment e ON r.equipment_id = e.equipment_id JOIN equipment_category c ON e.category_name = c.category_name " +
+                        "JOIN certification cert ON m.person_id = cert.member_id AND c.category_name = cert.category_name JOIN staff s ON cert.certified_by = s.person_id JOIN person p_s ON s.person_id = p_s.person_id " +
+                        "WHERE r.reservation_id = ?";
+        PreparedStatement pstmt = connection.prepareStatement(str);
+        pstmt.setInt(1, reservationID);
 
-            ResultSet rset = pstmt.executeQuery();
-            String first_name = "";
-            String last_name = "";
-            String equipment_name = "";
-            String category_name = "";
-            String start_time = "";
-            String end_time = "";
-            String reservation_status = "";
-            String staff_first = "";
-            String staff_last = "";
-            while (rset.next()) {
-                first_name = rset.getString("first_name");
-                last_name = rset.getString("last_name");
-                equipment_name = rset.getString("equipment_name");
-                category_name = rset.getString("category_name");
-                start_time = rset.getDate("start_time").toLocalDate().toString();
-                end_time = rset.getDate("end_time").toLocalDate().toString();
-                reservation_status = rset.getString("reservation_status");
-                staff_first = rset.getString("staff_first");
-                staff_last = rset.getString("staff_last");
-            }
-
-            if (start_time == "") {
-                System.out.println("ERROR: Reservation not found.");
-                return;
-            }
-
-            System.out.println("Reservation Information");
-            System.out.println("Reservation ID: " + reservationID);
-            System.out.println("Member: " + first_name + " " + last_name);
-            System.out.println("Equipment: " + equipment_name);
-            System.out.println("Category: " + category_name);
-            System.out.println("Start: " + start_time);
-            System.out.println("End: " + end_time);
-            System.out.println("Status: " + reservation_status);
-            System.out.println("Certified By: " + staff_first +  " " + staff_last);
-
-        } catch (SQLException e) {
-            System.out.println("ERROR: SQL Error");
-
+        ResultSet rset = pstmt.executeQuery();
+        String first_name = "";
+        String last_name = "";
+        String equipment_name = "";
+        String category_name = "";
+        String start_time = "";
+        String end_time = "";
+        String reservation_status = "";
+        String staff_first = "";
+        String staff_last = "";
+        while (rset.next()) {
+            first_name = rset.getString("first_name");
+            last_name = rset.getString("last_name");
+            equipment_name = rset.getString("equipment_name");
+            category_name = rset.getString("category_name");
+            start_time = rset.getDate("start_time").toLocalDate().toString();
+            end_time = rset.getDate("end_time").toLocalDate().toString();
+            reservation_status = rset.getString("reservation_status");
+            staff_first = rset.getString("staff_first");
+            staff_last = rset.getString("staff_last");
         }
+
+        if (start_time == "") {
+            System.out.println("ERROR: Reservation not found.");
+            return;
+        }
+
+        System.out.println("Reservation Information");
+        System.out.println("Reservation ID: " + reservationID);
+        System.out.println("Member: " + first_name + " " + last_name);
+        System.out.println("Equipment: " + equipment_name);
+        System.out.println("Category: " + category_name);
+        System.out.println("Start: " + start_time);
+        System.out.println("End: " + end_time);
+        System.out.println("Status: " + reservation_status);
+        System.out.println("Certified By: " + staff_first +  " " + staff_last);
+
     }
 
     static void updateMemberPhone(Connection connection, Scanner input) throws SQLException {
