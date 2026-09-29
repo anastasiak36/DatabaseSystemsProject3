@@ -12,57 +12,41 @@ public class p3 {
     static void reportEquipment(Connection connection, Scanner input) throws SQLException {
         System.out.println("Enter Equipment ID:");
         int equipID = input.nextInt();
+        Statement stmt = connection.createStatement();
+        //figure out how to put the acc equipID var into where
+        String str = "SELECT e.equipment_name, e.category_name, e.hourly_rate, e.equipment_status, r.room_name, r.floor_number FROM equipment e JOIN room r ON e.room_id = r.room_id WHERE e.equipment_id = ?";
+        PreparedStatement pstmt = connection.prepareStatement(str);
+        pstmt.setInt(1, equipID);
 
-        try {
-            Statement stmt = connection.createStatement();
-            //figure out how to put the acc equipID var into where
-            String str = "SELECT e.equipment_name, e.category_name, e.hourly_rate, e.equipment_status, r.room_name, r.floor_number FROM equipment e JOIN room r ON e.room_id = r.room_id WHERE e.equipment_id = ?";
-            PreparedStatement pstmt = connection.prepareStatement(str);
-            pstmt.setInt(1, equipID);
+        ResultSet rset = pstmt.executeQuery();
+        String equipment_name ="";
+        String category_name = "";
+        float hourly_rate = 0;
+        String equipment_status = "";
+        String room_name = "";
+        int floor_number = 0;
 
-            ResultSet rset = pstmt.executeQuery();
-            String equipment_name ="";
-            String category_name = "";
-            float hourly_rate = 0;
-            String equipment_status = "";
-            String room_name = "";
-            int floor_number = 0;
-
-            while (rset.next()) {
-                equipment_name = rset.getString("equipment_name");
-                category_name = rset.getString("category_name");
-                hourly_rate = rset.getFloat("hourly_rate");
-                equipment_status = rset.getString("equipment_status");
-                room_name = rset.getString("room_name");
-                floor_number = rset.getInt("floor_number");
-            }
-
-            if (equipment_name == "") {
-                System.out.println("ERROR: Equipment not found.");
-                return;
-            }
-            //Equipment Information
-            //Equipment ID: [equipment_id]
-            //Equipment Name: [equipment_name]
-            //Category: [category_name]
-            //Hourly Rate: $[rate with exactly two decimal places]
-            //Status: [equipment_status]
-            //Room: [room_name] (Floor [floor_number])
-
-            System.out.println("Equipment Information");
-            System.out.println("Equipment ID: " + equipID);
-            System.out.println("Equipment Name: " + equipment_name);
-            System.out.println("Category: " + category_name);
-            System.out.printf("Hourly Rate: %.2f\n", hourly_rate);
-            System.out.println("Status: " +  equipment_status);
-            System.out.printf("Room: %s (Floor %d)", room_name, floor_number);
-
-
-        } catch (SQLException e) {
-            System.out.println("ERROR: SQL Error");
-
+        while (rset.next()) {
+            equipment_name = rset.getString("equipment_name");
+            category_name = rset.getString("category_name");
+            hourly_rate = rset.getFloat("hourly_rate");
+            equipment_status = rset.getString("equipment_status");
+            room_name = rset.getString("room_name");
+            floor_number = rset.getInt("floor_number");
         }
 
+        if (equipment_name == "") {
+            System.out.println("ERROR: Equipment not found.");
+            return;
+        }
+
+        System.out.println("Equipment Information");
+        System.out.println("Equipment ID: " + equipID);
+        System.out.println("Equipment Name: " + equipment_name);
+        System.out.println("Category: " + category_name);
+        System.out.printf("Hourly Rate: %.2f\n", hourly_rate);
+        System.out.println("Status: " +  equipment_status);
+        System.out.printf("Room: %s (Floor %d)", room_name, floor_number);
     }
 
     static void reportMember(Connection connection, Scanner input) throws SQLException {
@@ -158,6 +142,26 @@ public class p3 {
 
     static void updateMemberPhone(Connection connection, Scanner input) throws SQLException {
         // TODO
+        System.out.println("Enter Member Email:");
+        String email = input.nextLine();
+        System.out.println("Enter Updated Phone Number:");
+        String phone = input.nextLine();
+
+        String str = "UPDATE person SET phone = ? WHERE email = ?";
+        PreparedStatement pstmt = connection.prepareStatement(str);
+        pstmt.setString(1, phone);
+        pstmt.setString(2, email);
+
+        int rows = pstmt.executeUpdate();
+        if (rows < 1 ) {
+            System.out.println("ERROR: Member not found.");
+        }
+        else{
+            System.out.println("SUCCESS: Member phone number updated.");
+        }
+
+
+
     }
 
     public static void main(String[] args) {
@@ -205,8 +209,6 @@ public class p3 {
 
         } catch (ClassNotFoundException e){
             System.out.println("Where is your Oracle JDBC Driver?");
-            e.printStackTrace();
-            return;
         }
 
         // connect to the database
@@ -223,9 +225,6 @@ public class p3 {
 
         } catch (SQLException e) {
             System.out.println("ERROR: Unable to connect to database.");
-            System.out.println("Oracle error: " + e.getMessage());
-            e.printStackTrace();
-            return;
         }
 
         // do the operation
