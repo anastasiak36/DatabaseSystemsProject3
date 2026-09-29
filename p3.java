@@ -10,7 +10,59 @@ import java.util.Scanner;
 
 public class p3 {
     static void reportEquipment(Connection connection, Scanner input) throws SQLException {
-        // TODO
+        System.out.println("Enter Equipment ID:");
+        int equipID = input.nextInt();
+
+        try {
+            Statement stmt = connection.createStatement();
+            //figure out how to put the acc equipID var into where
+            String str = "SELECT e.equipment_name, e.category_name, e.hourly_rate, e.equipment_status, r.room_name, r.floor_number FROM equipment e JOIN room r ON e.room_id = r.room_id WHERE e.equipment_id = ?";
+            PreparedStatement pstmt = connection.prepareStatement(str);
+            pstmt.setInt(1, equipID);
+
+            ResultSet rset = pstmt.executeQuery();
+            String equipment_name ="";
+            String category_name = "";
+            float hourly_rate = 0;
+            String equipment_status = "";
+            String room_name = "";
+            int floor_number = 0;
+
+            while (rset.next()) {
+                equipment_name = rset.getString("equipment_name");
+                category_name = rset.getString("category_name");
+                hourly_rate = rset.getFloat("hourly_rate");
+                equipment_status = rset.getString("equipment_status");
+                room_name = rset.getString("room_name");
+                floor_number = rset.getInt("floor_number");
+            }
+
+            if (equipment_name == "") {
+                System.out.println("ERROR: Equipment not found.");
+                return;
+            }
+            //Equipment Information
+            //Equipment ID: [equipment_id]
+            //Equipment Name: [equipment_name]
+            //Category: [category_name]
+            //Hourly Rate: $[rate with exactly two decimal places]
+            //Status: [equipment_status]
+            //Room: [room_name] (Floor [floor_number])
+
+            System.out.println("Equipment Information");
+            System.out.println("Equipment ID: " + equipID);
+            System.out.println("Equipment Name: " + equipment_name);
+            System.out.println("Category: " + category_name);
+            System.out.printf("Hourly Rate: %.2f\n", hourly_rate);
+            System.out.println("Status: " +  equipment_status);
+            System.out.printf("Room: %s (Floor %d)", room_name, floor_number);
+
+
+        } catch (SQLException e) {
+            System.out.println("ERROR: SQL Error");
+
+        }
+
     }
 
     static void reportMember(Connection connection, Scanner input) throws SQLException {
@@ -115,17 +167,11 @@ public class p3 {
                     break;
             }
 
+            connection.close();
+
         } catch (SQLException e) {
             System.out.println("ERROR: Database operation failed.");
 
-        } finally {
-            // close connection
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                }
-            }
         }
     }
 }
