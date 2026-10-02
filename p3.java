@@ -3,7 +3,7 @@
 //           Oracle XE     localhost:1521/XEPDB1 (or your configured XE service)
 //           Oracle FreeSQL db.freesql.com:1521/<service_name> (retrieve by clicking on the Connection button)
 // CS3431 A26 Project Phase 3 - Java starter
-// Team members:
+// Team members: Anastasia Kelnik, Sylvia Jacobs
 
 import java.sql.*;
 import java.util.Scanner;
