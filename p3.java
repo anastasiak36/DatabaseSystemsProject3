@@ -7,13 +7,13 @@
 
 import java.sql.*;
 import java.util.Scanner;
+import java.time.format.DateTimeFormatter;
 
 public class p3 {
     static void reportEquipment(Connection connection, Scanner input) throws SQLException {
         System.out.println("Enter Equipment ID:");
         int equipID = input.nextInt();
-        Statement stmt = connection.createStatement();
-        //figure out how to put the acc equipID var into where
+
         String str = "SELECT e.equipment_name, e.category_name, e.hourly_rate, e.equipment_status, r.room_name, r.floor_number FROM equipment e JOIN room r ON e.room_id = r.room_id WHERE e.equipment_id = ?";
         PreparedStatement pstmt = connection.prepareStatement(str);
         pstmt.setInt(1, equipID);
@@ -26,6 +26,7 @@ public class p3 {
         String room_name = "";
         int floor_number = 0;
 
+
         while (rset.next()) {
             equipment_name = rset.getString("equipment_name");
             category_name = rset.getString("category_name");
@@ -35,7 +36,7 @@ public class p3 {
             floor_number = rset.getInt("floor_number");
         }
 
-        if (equipment_name == "") {
+        if (equipment_name.isEmpty()) {
             System.out.println("ERROR: Equipment not found.");
             return;
         }
@@ -44,16 +45,22 @@ public class p3 {
         System.out.println("Equipment ID: " + equipID);
         System.out.println("Equipment Name: " + equipment_name);
         System.out.println("Category: " + category_name);
-        System.out.printf("Hourly Rate: %.2f\n", hourly_rate);
+        System.out.printf("Hourly Rate: $%.2f\n", hourly_rate);
         System.out.println("Status: " +  equipment_status);
-        System.out.printf("Room: %s (Floor %d)", room_name, floor_number);
+        System.out.printf("Room: %s (Floor %d)\n", room_name, floor_number);
+
+        if (rset != null) {
+            rset.close();
+        }
+        if (pstmt != null) {
+            pstmt.close();
+        }
     }
 
     static void reportMember(Connection connection, Scanner input) throws SQLException {
         System.out.println("Enter Member Email:");
         String memberEmail = input.nextLine();
 
-        Statement stmt = connection.createStatement();
         String str = "SELECT p.person_id, p.first_name, p.last_name, p.phone, m.member_level, m.date_joined FROM person p JOIN member m ON p.person_id = m.person_id WHERE p.email = ?";
         PreparedStatement pstmt = connection.prepareStatement(str);
         pstmt.setString(1, memberEmail);
@@ -75,7 +82,7 @@ public class p3 {
             date_joined = rset.getDate("date_joined").toLocalDate().toString();
         }
 
-        if (member_level == "") {
+        if (member_level.isEmpty()) {
             System.out.println("ERROR: Member not found.");
             return;
         }
@@ -87,13 +94,19 @@ public class p3 {
         System.out.println("Member Level: " +  member_level);
         System.out.println("Date Joined:  " + date_joined);
 
+        if (rset != null) {
+            rset.close();
+        }
+        if (pstmt != null) {
+            pstmt.close();
+        }
+
     }
 
     static void reportReservation(Connection connection, Scanner input) throws SQLException {
         System.out.println("Enter Reservation ID:");
         int reservationID = input.nextInt();
 
-        Statement stmt = connection.createStatement();
         String str = "SELECT p.first_name, p.last_name, e.equipment_name, c.category_name, r.start_time, r.end_time, r.reservation_status, p_s.first_name as staff_first, p_s.last_name as staff_last " +
                         "FROM reservation r JOIN member m ON r.member_id = m.person_id JOIN person p ON m.person_id = p.person_id JOIN equipment e ON r.equipment_id = e.equipment_id JOIN equipment_category c ON e.category_name = c.category_name " +
                         "JOIN certification cert ON m.person_id = cert.member_id AND c.category_name = cert.category_name JOIN staff s ON cert.certified_by = s.person_id JOIN person p_s ON s.person_id = p_s.person_id " +
@@ -111,19 +124,22 @@ public class p3 {
         String reservation_status = "";
         String staff_first = "";
         String staff_last = "";
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
         while (rset.next()) {
             first_name = rset.getString("first_name");
             last_name = rset.getString("last_name");
             equipment_name = rset.getString("equipment_name");
             category_name = rset.getString("category_name");
-            start_time = rset.getDate("start_time").toLocalDate().toString();
-            end_time = rset.getDate("end_time").toLocalDate().toString();
+            start_time = rset.getTimestamp("start_time").toLocalDateTime().format(formatter);
+            end_time = rset.getTimestamp("end_time").toLocalDateTime().format(formatter);
             reservation_status = rset.getString("reservation_status");
             staff_first = rset.getString("staff_first");
             staff_last = rset.getString("staff_last");
         }
 
-        if (start_time == "") {
+        if (start_time.isEmpty()) {
             System.out.println("ERROR: Reservation not found.");
             return;
         }
@@ -138,16 +154,22 @@ public class p3 {
         System.out.println("Status: " + reservation_status);
         System.out.println("Certified By: " + staff_first +  " " + staff_last);
 
+        if (rset != null) {
+            rset.close();
+        }
+        if (pstmt != null) {
+            pstmt.close();
+        }
+
     }
 
     static void updateMemberPhone(Connection connection, Scanner input) throws SQLException {
-        // TODO
         System.out.println("Enter Member Email:");
         String email = input.nextLine();
         System.out.println("Enter Updated Phone Number:");
         String phone = input.nextLine();
 
-        String str = "UPDATE person SET phone = ? WHERE email = ?";
+        String str = "UPDATE person SET phone = ? WHERE email = ? AND person_id IN (SELECT person_id FROM member)";
         PreparedStatement pstmt = connection.prepareStatement(str);
         pstmt.setString(1, phone);
         pstmt.setString(2, email);
@@ -157,10 +179,13 @@ public class p3 {
             System.out.println("ERROR: Member not found.");
         }
         else{
+            connection.commit();
             System.out.println("SUCCESS: Member phone number updated.");
         }
 
-
+        if (pstmt != null) {
+            pstmt.close();
+        }
 
     }
 
@@ -208,7 +233,8 @@ public class p3 {
             Class.forName("oracle.jdbc.driver.OracleDriver");
 
         } catch (ClassNotFoundException e){
-            System.out.println("Where is your Oracle JDBC Driver?");
+            System.out.println("ERROR: Unable to connect to database.");
+            return;
         }
 
         // connect to the database
@@ -223,8 +249,11 @@ public class p3 {
                     password
             );
 
+            connection.setAutoCommit(false);
+
         } catch (SQLException e) {
             System.out.println("ERROR: Unable to connect to database.");
+            return;
         }
 
         // do the operation
@@ -253,7 +282,6 @@ public class p3 {
 
         } catch (SQLException e) {
             System.out.println("ERROR: Database operation failed.");
-
         }
     }
 }
